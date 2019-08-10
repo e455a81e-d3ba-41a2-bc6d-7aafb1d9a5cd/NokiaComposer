@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LearningFSharp": {
+      "commandName": "Project",
+      "commandLineArgs": "one two three"
+    }
+  }
+}
