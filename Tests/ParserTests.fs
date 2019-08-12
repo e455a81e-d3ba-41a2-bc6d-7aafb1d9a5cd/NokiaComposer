@@ -1,92 +1,79 @@
-﻿module ParserTests
+﻿namespace ParserTests
 
-open NUnit.Framework
+open Xunit
+open FsUnit.Xunit
 open composer_parsing
 
-[<TestFixture>]
-type ``When parsing a score`` () =
+module ``When parsing a score``  =
 
 
-    [<Test>]
-    member this.``it should parse a simple score`` () =
+    [<Fact>]
+    let ``it should parse a simple score`` () =
         let score = "32.#d3 16-"
         let result = parse score
 
         let assertFirstToken token=
-            Assert.AreEqual({fraction = Thirtysecondth; extended=true}, token.length)
-            Assert.AreEqual(Tone ( DSharp, Three), token.sound)
+            token.length |> should equal {fraction = Thirtysecondth; extended=true}
+            token.sound |> should equal (Tone ( DSharp, Three))
 
         let assertSecondToken {length = length; sound=sound}=
-            Assert.AreEqual({fraction = Sixteenth; extended=false}, length)
-            Assert.AreEqual(Rest, sound)
+            length |> should equal {fraction = Sixteenth; extended=false}
+            sound |> should equal Rest
 
         match result with 
-            | Choice1Of2 errorMsg -> Assert.Fail(errorMsg)
+            | Choice1Of2 errorMsg -> failwith errorMsg
             | Choice2Of2 tokens -> 
-                Assert.AreEqual(2, List.length tokens)
+                tokens |> should haveLength 2
                 List.head tokens |> assertFirstToken 
                 List.item 1 tokens|> assertSecondToken
                 ()
 
-[<TestFixture>]
-type ``When calculating the frequency of notes`` () =
+module ``When calculating the frequency of notes``  =
     
-    [<Test>]
-    member this.``A2 should be 440Hz`` () = 
-        Assert.AreEqual(440., Tone(A, Two) |> frequency, 0.1)
+    [<Fact>]
+    let ``A2 should be 440Hz`` () = 
+        Tone(A, Two) |> frequency |> should (equalWithin 0.1) 440.
 
-    [<Test>]
-    member this.``GSharp2 should be 830.61`` ()=
-        Assert.AreEqual(830.61, Tone (GSharp,Two) |> frequency, 0.1)
+    [<Fact>]
+    let ``GSharp2 should be 830.61`` () =
+        Tone(GSharp, Two) |> frequency |> should (equalWithin 0.1) 830.61
 
 
-[<TestFixture>]
-type ``When calculating the semitones between notes`` ()=
-    [<Test>]
-    member this.``A1->A2 should be 12`` ()=
-        Assert.AreEqual(12, semitonesBetween (A,One) (A,Two))
+module ``When calculating the semitones between notes`` =
+    [<Fact>]
+    let ``A1->A2 should be 12`` ()=
+        ((A, One), (A, Two)) ||> semitonesBetween |> should equal 12
         
-    [<Test>]
-    member this.``A1->A3 should be 24`` ()=
-        Assert.AreEqual(24, semitonesBetween (A,One) (A,Three))
+    [<Fact>]
+    let ``A1->A3 should be 24`` ()=
+        ((A, One), (A, Three)) ||> semitonesBetween |> should equal 24 
     
-    [<Test>]
-    member this.``A2->CSharp4 should be 16`` ()=
-        Assert.AreEqual(16, semitonesBetween (A,Two) (CSharp,Three))
+    [<Fact>]
+    let ``A2->CSharp4 should be 16`` ()= 
+        ((A, Two), (CSharp, Three)) ||> semitonesBetween |> should equal 16 
 
-
-[<TestFixture>]
-type ``When calculating the duration of a note`` ()=
-    [<Test>]
-    member this.``a quarter note should last 500ms`` ()=
-        Assert.AreEqual(
-          500., 
+module ``When calculating the duration of a note`` =
+    [<Fact>]
+    let ``a quarter note should last 500ms`` ()=
           durationFromToken { 
            length={fraction = Quarter; extended = false}; 
-           sound=Tone (DSharp,Three)})
+           sound=Tone (DSharp,Three)} |> should equal 500.
 
-    [<Test>]
-    member this.``an extended quarter note should last 750ms`` ()=
-        Assert.AreEqual(
-          750., 
+    [<Fact>]
+    let ``an extended quarter note should last 750ms`` ()=
           durationFromToken { 
            length={fraction = Quarter; extended = true}; 
-           sound=Tone (DSharp,Three)})
+           sound=Tone (DSharp,Three)} |> should equal 750. 
 
-    [<Test>]
-    member this.``a 32nd note should last 62.5ms`` ()=
-        Assert.AreEqual(
-          62.5, 
+    [<Fact>]
+    let ``a 32nd note should last 62,5ms`` ()=
           durationFromToken { 
            length={fraction = Thirtysecondth; extended = false}; 
-           sound=Tone (DSharp,Three)})
+           sound=Tone (DSharp,Three)} |> should equal 62.5
 
-    [<Test>]
-    member this.``an extended 32th note should last 62.5ms`` ()=
-        Assert.AreEqual(
-          93.75, 
+    [<Fact>]
+    let ``an extended 32th note should last 62,5ms`` ()=
           durationFromToken { 
            length={fraction = Thirtysecondth; extended = true}; 
-           sound=Tone (DSharp,Three)})
-
+           sound=Tone (DSharp,Three)} |> should equal 93.75
 
